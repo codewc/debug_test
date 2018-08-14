@@ -1,0 +1,19 @@
+[INFO  - 2018-08-06T15:42:07.204Z] GhostDriver - Main - running on port 58788
+[INFO  - 2018-08-06T15:42:11.780Z] Session [48ee25e0-998f-11e8-93eb-1bb00608756c] - page.settings - {"XSSAuditingEnabled":false,"javascriptCanCloseWindows":true,"javascriptCanOpenWindows":true,"javascriptEnabled":true,"loadImages":true,"localToRemoteUrlAccessEnabled":false,"userAgent":"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1","webSecurityEnabled":true}
+[INFO  - 2018-08-06T15:42:11.780Z] Session [48ee25e0-998f-11e8-93eb-1bb00608756c] - page.customHeaders:  - {}
+[INFO  - 2018-08-06T15:42:11.780Z] Session [48ee25e0-998f-11e8-93eb-1bb00608756c] - Session.negotiatedCapabilities - {"browserName":"phantomjs","version":"2.1.1","driverName":"ghostdriver","driverVersion":"1.2.0","platform":"windows-10-32bit","javascriptEnabled":true,"takesScreenshot":true,"handlesAlerts":false,"databaseEnabled":false,"locationContextEnabled":false,"applicationCacheEnabled":false,"browserConnectionEnabled":false,"cssSelectorsEnabled":true,"webStorageEnabled":false,"rotatable":false,"acceptSslCerts":false,"nativeEvents":true,"proxy":{"proxyType":"direct"}}
+[INFO  - 2018-08-06T15:42:11.780Z] SessionManagerReqHand - _postNewSessionCommand - New Session Created: 48ee25e0-998f-11e8-93eb-1bb00608756c
+[ERROR - 2018-08-06T15:42:25.674Z] Session [48ee25e0-998f-11e8-93eb-1bb00608756c] - page.onError - msg: TypeError: undefined is not an object (evaluating 'browserMatch.browser')
+
+  phantomjs://platform/console++.js:263 in error
+[ERROR - 2018-08-06T15:42:25.674Z] Session [48ee25e0-998f-11e8-93eb-1bb00608756c] - page.onError - stack:
+  (anonymous function) (http://wenshu.court.gov.cn/Assets/js/libs/js/framework.js:95)
+  o (http://wenshu.court.gov.cn/Assets/js/libs/js/jquery.js:2)
+  fireWith (http://wenshu.court.gov.cn/Assets/js/libs/js/jquery.js:2)
+  ready (http://wenshu.court.gov.cn/Assets/js/libs/js/jquery.js:2)
+  B (http://wenshu.court.gov.cn/Assets/js/libs/js/jquery.js:2)
+
+  phantomjs://platform/console++.js:263 in error
+[ERROR - 2018-08-06T15:42:28.653Z] WebElementLocator - _handleLocateCommand - Element(s) NOT Found: GAVE UP. Search Stop Time: 1533570148590
+
+  phantomjs://platform/console++.js:263 in error
