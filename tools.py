@@ -25,7 +25,6 @@ with open("base64.js") as f:
 #https://wangye.org/tools/scripts/eval/
 execjs.compile(keyjs)
 execjs.compile(base64)
-de_1 = execjs.compile(md5).call('de_1')
-de_2 = execjs.compile(md5).call('de_2')
-print(de_1)
-print(de_2)
+
+
+with open("tes.js") as f:
