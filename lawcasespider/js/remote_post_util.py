@@ -82,7 +82,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-14'):
         proxies=proxies,
         data=payload,
     )
-    print(res.cookies)
+    logging.info(res.cookies)
     return res.cookies.get("vjkl5")
 
 

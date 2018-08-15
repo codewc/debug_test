@@ -30,14 +30,13 @@ with open("wen_shu.js") as f:
 
 # AJLX = "案件类型:民事案件"
 # WSLX = "文书类型:判决书"
-AJLX = None
-WSLX = None
-CPRQ = "2018-08-06"
+AJLX = "案件类型:民事案件"
+WSLX = "文书类型:判决书"
+CPRQ = "2018-08-08"
 
 # print(vl5x)
 uuid = execjs.compile(wen_shu_js).call('guid')
-temp = remote_post_util.post_get_vjkl5(uuid)
-print(temp)
+
 
 vjkl5 = remote_post_util.post_get_vjkl5(uuid)
 update_vjkl5 = False
@@ -50,7 +49,7 @@ while (True):
     uuid = execjs.compile(wen_shu_js).call('guid')
     number = remote_post_util.post_get_number(guid=uuid, vjkl5=vjkl5, AJLX=AJLX, WSLX=WSLX, CPRQ=CPRQ)
     ret = remote_post_util.post_list_context(guid=uuid, vl5x=vl5x, vjkl5=vjkl5, number=number, AJLX=AJLX, WSLX=WSLX,
-                                             CPRQ=CPRQ)
+                                             CPRQ=CPRQ,Index=1)
     if ret != '[check]' and ret != 'remind' and ret != 'remind key':
         break
     if i % 20 == 0:
