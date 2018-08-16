@@ -16,7 +16,7 @@ def get_case_lawyer():
                                  db="duowen", charset='utf8')
     # 通过cursor创建游标
     cursor = connection.cursor()
-    sql = 'select id,casenum,deal,office,phone,realname,remarks from case_lawyer where deal=FALSE order by id desc LIMIT 1'
+    sql = 'select id,casenum,deal,office,phone,realname,remarks from case_lawyer where deal=FALSE order by realname desc LIMIT 1'
     cursor.execute(sql)
     row = cursor.fetchone()
     lawyer = {"id": row[0], "casenum": row[1], "deal": row[2], "office": row[3], "phone": row[4], "realname": row[5],
@@ -32,7 +32,7 @@ def update_case_lawyer(lawyer_id, page_json):
     # 通过cursor创建游标
     cursor = connection.cursor()
     page_data = json.loads(page_json)
-    temp_sql = '''INSERT INTO `case_lawyer_schema`
+    template_sql = '''INSERT INTO `case_lawyer_schema`
      (`id`,
       `lawyer_id`,
       `json_batch_count`,
@@ -50,7 +50,7 @@ def update_case_lawyer(lawyer_id, page_json):
         if it.get("Count") is not None:
             json_batch_count = int(it.get("Count"))
             continue
-        id = uuid.uuid1().hex
+        id = str(uuid.uuid1())
         json_data_context = it.get("裁判要旨段原文")
         json_data_type = it.get("案件类型")
         json_data_date = it.get("裁判日期")
@@ -60,7 +60,7 @@ def update_case_lawyer(lawyer_id, page_json):
         json_data_number = it.get("案号")
         json_data_court = it.get("法院名称")
 
-        cursor.execute(temp_sql, (
+        cursor.execute(template_sql, (
             id, lawyer_id, json_batch_count, json_data_context, json_data_type, json_data_date, json_data_name,
             json_data_id, json_data_level, json_data_number, json_data_court))
     connection.commit()

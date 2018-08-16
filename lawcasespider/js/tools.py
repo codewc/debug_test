@@ -41,6 +41,7 @@ CPRQ = None
 
 def init_cookies():
     browser = webdriver.Chrome()
+    browser.delete_all_cookies()
     global cookie_dict
     try:
         browser.get("http://wenshu.court.gov.cn")
@@ -56,7 +57,7 @@ def init_cookies():
         }
         logging.info(cookie_dict)
     finally:
-        browser.close()
+        browser.quit()
     return cookie_dict
 
 
