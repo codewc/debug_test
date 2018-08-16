@@ -7,7 +7,7 @@ import urllib.parse as urlParse
 proxies = {
     # 'http': 'http://223.153.84.130:11067',
     # 'http': 'http://116.53.197.218:17731',
-    'http': 'http://117.65.47.91:4325',
+    # 'http': 'http://117.65.47.91:4325',
 }
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
@@ -76,6 +76,11 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-14'):
     return res.cookies.get("vjkl5")
 
 
+'''
+去获取请求number参数
+'''
+
+
 def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, cookies={}):
     condition = "";
     if AJLX is not None:
@@ -112,6 +117,11 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYE
     logging.info(headers)
     d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies)
     return d.text
+
+
+'''
+去获取内容
+'''
 
 
 def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, Index=1, Page=5,

@@ -24,8 +24,8 @@ with open("wen_shu.js") as f:
 # AJLX = "案件类型:民事案件"
 # CPRQ = "2018-07-06"
 # WSLX = "文书类型:判决书"
-#LAWYER = "张娟"
-#LS = "安徽烁光律师事务所"
+# LAWYER = "张娟"
+# LS = "安徽烁光律师事务所"
 case_lawyer = db.get_case_lawyer()
 LAWYER = case_lawyer.get("realname")
 LS = case_lawyer.get("office")
@@ -75,10 +75,9 @@ while (True):
     uuid = execjs.compile(wen_shu_js).call('guid')
     number = remote_post_util.post_get_number(guid=uuid, vjkl5=vjkl5, AJLX=AJLX, WSLX=WSLX, CPRQ=CPRQ, LAWYER=LAWYER,
                                               LS=LS, cookies=cookies)
-    ret = remote_post_util.post_list_context(guid=uuid, vl5x=vl5x, vjkl5=vjkl5, number=number, AJLX=AJLX, WSLX=WSLX,
-                                             CPRQ=CPRQ, LAWYER=LAWYER, LS=LS, Index=1, cookies=cookies)
-    if ret != '[check]' and ret != 'remind' and ret != 'remind key':
-        break
-    if i % 20 == 0:
-        update_vjkl5 = True
-    time.sleep(10)
+    page_json = remote_post_util.post_list_context(guid=uuid, vl5x=vl5x, vjkl5=vjkl5, number=number, AJLX=AJLX,
+                                                   WSLX=WSLX,
+                                                   CPRQ=CPRQ, LAWYER=LAWYER, LS=LS, Index=1, cookies=cookies)
+
+    db.update_case_lawyer(case_lawyer.get("id"), page_json)
+    break
