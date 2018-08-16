@@ -2,7 +2,13 @@ import logging
 import urllib.parse as urlparse
 
 import requests
+import urllib.parse as urlParse
 
+proxies = {
+    # 'http': 'http://223.153.84.130:11067',
+    # 'http': 'http://116.53.197.218:17731',
+    'http': 'http://117.65.47.91:4325',
+}
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
 '''
@@ -31,30 +37,14 @@ data_dict = {
     '文书类型:令': '&conditions=searchWord+9+WSLX++%E6%96%87%E4%B9%A6%E7%B1%BB%E5%9E%8B:%E4%BB%A4',
     '文书类型:其他': '&conditions=searchWord+10+WSLX++%E6%96%87%E4%B9%A6%E7%B1%BB%E5%9E%8B:%E5%85%B6%E4%BB%96',
 
+    # &conditions=searchWord+国信信扬律师事务所+LS++律所:国信信扬律师事务所
+    '律所': '&conditions=searchWord+{}+LS++%E5%BE%8B%E6%89%80:{}',
+    # &conditions=searchWord+冯志成+LAWYER++律师:冯志成
+    '律师': '&conditions=searchWord+{}+LAWYER++%E5%BE%8B%E5%B8%88:{}',
     # 裁判日期:2018-08-08 TO 2018-08-10
     '裁判日期': '&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}',
 
 }
-
-proxies = {
-    # 'http': 'http://223.153.84.130:11067',
-    # 'http': 'http://116.53.197.218:17731',
-}
-
-
-def test():
-    "&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&conditions=searchWord+1+WSLX++%E6%96%87%E4%B9%A6%E7%B1%BB%E5%9E%8B:%E5%88%A4%E5%86%B3%E4%B9%A6&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:2018-08-08%20TO%202018-08-08"
-    test = 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=U3T9C93Z&guid=322d4c47-9476-d7704acb-b41961dfc6e7&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&conditions=searchWord+1+WSLX++%E6%96%87%E4%B9%A6%E7%B1%BB%E5%9E%8B:%E5%88%A4%E5%86%B3%E4%B9%A6&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:2018-08-08%20TO%202018-08-08'
-    query_date = '2018-08-06'
-    CPRQ = '&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}'.format(query_date,
-                                                                                                    query_date)
-    hh = urlparse.quote(test, safe='/:?=+&').encode('gbk')
-    print(hh)
-    print('--->' + urlparse.unquote(hh.decode('gbk')))
-    test2 = 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=Y2F439BQ&guid=237747f3-8219-53440205-133dc444c1ed&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&conditions=searchWord+1+WSLX++%E6%96%87%E4%B9%A6%E7%B1%BB%E5%9E%8B:%E5%88%A4%E5%86%B3%E4%B9%A6&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:2018-08-08%20TO%202018-08-08'
-    print(test2)
-    print('--->' + urlparse.unquote(test2))
-    print(CPRQ)
 
 
 def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-14'):
@@ -65,7 +55,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-14'):
     # print(res.text)
     # print(res.cookies)
     conditon = ""
-    conditons = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}".format(CPRQ, CPRQ)
+    # conditons = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}".format(CPRQ, CPRQ)
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -86,7 +76,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-14'):
     return res.cookies.get("vjkl5")
 
 
-def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None):
+def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, cookies={}):
     condition = "";
     if AJLX is not None:
         condition += data_dict.get(AJLX)
@@ -94,7 +84,15 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None):
         condition += data_dict.get(WSLX)
     if CPRQ is not None:
         condition += data_dict.get('裁判日期').format(CPRQ, CPRQ)
-
+    if LS is not None:
+        ls = urlparse.quote(LS)
+        condition += data_dict.get("律所").format(ls, ls)
+    if LAWYER is not None:
+        lawyer = urlParse.quote(LAWYER)
+        condition += data_dict.get("律师").format(lawyer, lawyer)
+    head_cookie = ""
+    for key, value in cookies.items():
+        head_cookie += key + "=" + value + "; ";
     payload = {"guid": guid, }
     headers = {'Accept': '*/*',
                'Accept-Encoding': 'gzip, deflate',
@@ -102,7 +100,8 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None):
                'Connection': 'keep-alive',
                'Content-Length': '40',
                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-               'Cookie': 'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2=1534300829; _gscu_2116842793=3430082807nzm686; _gscbrs_2116842793=1; _gscs_2116842793=343008280aveh586|pv:2; Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2=1534300850; vjkl5=' + vjkl5,
+               # 'Cookie': 'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; _gscu_2116842793=3430082807nzm686; _gscbrs_2116842793=1; _gscs_2116842793=343008280aveh586|pv:2; Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; vjkl5=' + vjkl5,
+               'Cookie': head_cookie + 'vjkl5=' + vjkl5,
                'Host': 'wenshu.court.gov.cn',
                'Origin': 'http://wenshu.court.gov.cn',
                'Referer': 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=' + guid + condition,
@@ -115,21 +114,32 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None):
     return d.text
 
 
-def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None, Index=1, Page=5):
+def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, Index=1, Page=5,
+                      cookies={}):
     sep = ","
     param = {'Param': ''}
     condition = "";
     if AJLX is not None:
-        condition += data_dict.get(AJLX) + sep
+        condition += data_dict.get(AJLX)
         param['Param'] = param['Param'] + AJLX + sep
     if WSLX is not None:
-        condition += data_dict.get(WSLX) + sep
+        condition += data_dict.get(WSLX)
         param['Param'] = param['Param'] + WSLX + sep
     if CPRQ is not None:
-        condition += data_dict.get('裁判日期').format(CPRQ, CPRQ) + sep
+        condition += data_dict.get('裁判日期').format(CPRQ, CPRQ)
         param['Param'] = param['Param'] + '裁判日期:{} TO {}'.format(CPRQ, CPRQ) + sep
+    if LS is not None:
+        ls = urlParse.quote(LS)
+        condition += data_dict.get("律所").format(ls, ls)
+        param['Param'] = param['Param'] + '律所:{}'.format(LS) + sep
+    if LAWYER is not None:
+        lawyer = urlParse.quote(LAWYER)
+        condition += data_dict.get("律师").format(lawyer, lawyer)
+        param['Param'] = param['Param'] + '律师:{}'.format(LAWYER) + sep
+    head_cookie = ""
+    for key, value in cookies.items():
+        head_cookie += key + "=" + value + "; ";
 
-    condition = condition[:-1]  # 去除最后一个逗号sep
     param['Param'] = param['Param'][:-1]  # 去除最后一个逗号sep
     payload = {'Param': param['Param'],
                'Index': Index,
@@ -146,7 +156,8 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
                'Connection': 'keep-alive',
                # 'Content-Length': '5000',
                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-               'Cookie': 'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2=1534300829; _gscu_2116842793=3430082807nzm686; _gscbrs_2116842793=1; _gscs_2116842793=343008280aveh586|pv:2; Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2=1534300850; vjkl5=' + vjkl5,
+               # 'Cookie': 'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; _gscu_2116842793=3430082807nzm686; _gscbrs_2116842793=1; _gscs_2116842793=343008280aveh586|pv:2; Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; vjkl5=' + vjkl5,
+               'Cookie': head_cookie + 'vjkl5=' + vjkl5,
                'Host': 'wenshu.court.gov.cn',
                'Origin': 'http://wenshu.court.gov.cn',
                'Referer': 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=' + guid + condition,
