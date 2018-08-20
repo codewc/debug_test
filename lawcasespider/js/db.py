@@ -16,7 +16,7 @@ def get_case_lawyer():
                                  db="duowen", charset='utf8')
     # 通过cursor创建游标
     cursor = connection.cursor()
-    sql = 'select id,casenum,deal,office,phone,realname,remarks from case_lawyer where deal=FALSE order by realname desc LIMIT 1'
+    sql = 'select id,casenum,deal,office,phone,realname,remarks from case_lawyer where deal=FALSE order by id asc LIMIT 1'
     cursor.execute(sql)
     row = cursor.fetchone()
     lawyer = {"id": row[0], "casenum": row[1], "deal": row[2], "office": row[3], "phone": row[4], "realname": row[5],
@@ -26,7 +26,7 @@ def get_case_lawyer():
     return lawyer
 
 
-def update_case_lawyer(lawyer_id, page_json):
+def insert_case_lawyer_schema(lawyer_id, page_json):
     connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
                                  db="duowen", charset='utf8')
     # 通过cursor创建游标
@@ -59,9 +59,23 @@ def update_case_lawyer(lawyer_id, page_json):
         json_data_level = it.get("审判程序")
         json_data_number = it.get("案号")
         json_data_court = it.get("法院名称")
+        try:
+            cursor.execute(template_sql, (
+                id, lawyer_id, json_batch_count, json_data_context, json_data_type, json_data_date, json_data_name,
+                json_data_id, json_data_level, json_data_number, json_data_court))
+            connection.commit()
+        except Exception as exception:
+            logging.exception("发生了错误")
+    connection.close()
+    return page_json
 
-        cursor.execute(template_sql, (
-            id, lawyer_id, json_batch_count, json_data_context, json_data_type, json_data_date, json_data_name,
-            json_data_id, json_data_level, json_data_number, json_data_court))
+
+def update_case_lawyer(lawyer_id, casenum):
+    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
+                                 db="duowen", charset='utf8')
+    # 通过cursor创建游标
+    cursor = connection.cursor()
+    template_sql = '''update `case_lawyer` set `casenum`= %s,deal=TRUE where `id`= %s''';
+    cursor.execute(template_sql, (casenum, lawyer_id))
     connection.commit()
     connection.close()

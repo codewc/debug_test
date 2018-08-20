@@ -3,12 +3,28 @@ import urllib.parse as urlparse
 
 import requests
 import urllib.parse as urlParse
+from selenium import webdriver
+import random
 
+ip_port = '183.164.244.21:10077'
 proxies = {
     # 'http': 'http://223.153.84.130:11067',
     # 'http': 'http://116.53.197.218:17731',
-    # 'http': 'http://117.65.47.91:4325',
+    'http': 'http://{}'.format(ip_port),
+    'https': 'https://{}'.format(ip_port),
 }
+ip_config = {
+    'ip_config': '{}'.format(ip_port),
+}
+
+my_headers = [
+    "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/537.75.14",
+    "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Win64; x64; Trident/6.0)"
+
+]
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
 '''
@@ -45,33 +61,47 @@ data_dict = {
     '裁判日期': '&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}',
 
 }
+'''
+	@获取403禁止访问的网页
+	'''
 
 
-def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-14'):
+def get_randdom_header():
+    randdom_header = random.choice(my_headers)
+    return randdom_header
+
+
+def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     # http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=4e1ea9ed-1930-cae981f3-368067fde505&conditions=searchWord++CPRQ++裁判日期:2018-08-04   TO   2018-08-04
     # res = requests.post(
     #     "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=4e1ea9ed-1930-cae981f3-368067fde505&conditions=searchWord++CPRQ++裁判日期:2018-08-04   TO   2018-08-04",
     #     headers=headers)
     # print(res.text)
     # print(res.cookies)
-    conditon = ""
+
+    conditon = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}"
     # conditons = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}".format(CPRQ, CPRQ)
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
                'Connection': 'keep-alive',
+               'Cache-Control': 'max-age=0',
                'Host': 'wenshu.court.gov.cn',
                'Upgrade-Insecure-Requests': '1',
-               'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
+               # 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
+               'User-Agent': get_randdom_header(),
                }
     payload = {"guid": guid, "sorttype": 1, "number": "",
                "conditions": 'searchWord  CPRQ  裁判日期:{} TO {}'.format(CPRQ, CPRQ)}  # 先写死
-    res = requests.get(
-        url="http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon,
+    res = requests.post(
+        url="http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon.format(CPRQ, CPRQ),
+        # url="http://www.sohu.com/",
         headers=headers,
         proxies=proxies,
         data=payload,
     )
+    print("http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon.format(CPRQ, CPRQ))
+    # print(res.text)
     logging.info(res.cookies)
     return res.cookies.get("vjkl5")
 
@@ -110,7 +140,8 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYE
                'Host': 'wenshu.court.gov.cn',
                'Origin': 'http://wenshu.court.gov.cn',
                'Referer': 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=' + guid + condition,
-               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
+               # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
+               'User-Agent': get_randdom_header(),
                'X-Requested-With': 'XMLHttpRequest',
                }
     logging.info(payload)
