@@ -5,17 +5,10 @@ import requests
 import urllib.parse as urlParse
 from selenium import webdriver
 import random
+from ip_tools import get_ip
 
-ip_port = '183.164.244.21:10077'
-proxies = {
-    # 'http': 'http://223.153.84.130:11067',
-    # 'http': 'http://116.53.197.218:17731',
-    'http': 'http://{}'.format(ip_port),
-    'https': 'https://{}'.format(ip_port),
-}
-ip_config = {
-    'ip_config': '{}'.format(ip_port),
-}
+global proxies
+global ip_config
 
 my_headers = [
     "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36",
@@ -26,7 +19,7 @@ my_headers = [
 
 ]
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S', )
+                    datefmt='%a, %d %b %Y %H:%M:%S', filemode='a')
 '''
 搜索条件
 案件类型:民事案件,文书类型:判决书,裁判日期:2018-08-08   TO   2018-08-08
@@ -66,6 +59,23 @@ data_dict = {
 	'''
 
 
+def init_randdom_ip_port():
+    ip_port = get_ip()
+    logging.info("change ip_port=>" + ip_port)
+    global proxies
+    proxies = {
+        'http': 'http://{}'.format(ip_port),
+        'https': 'https://{}'.format(ip_port),
+    }
+    global ip_config
+    ip_config = {
+        'ip_config': '{}'.format(ip_port),
+    }
+
+
+init_randdom_ip_port()
+
+
 def get_randdom_header():
     randdom_header = random.choice(my_headers)
     return randdom_header
@@ -99,6 +109,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
         headers=headers,
         proxies=proxies,
         data=payload,
+        timeout=120,
     )
     print("http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon.format(CPRQ, CPRQ))
     # print(res.text)
@@ -146,7 +157,8 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYE
                }
     logging.info(payload)
     logging.info(headers)
-    d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies)
+    d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies,
+                      timeout=120)
     return d.text
 
 
@@ -207,6 +219,7 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
                }
     logging.info(payload)
     logging.info(headers)
-    d = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers, proxies=proxies)
+    d = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers, proxies=proxies,
+                      timeout=120)
     logging.info(d.json())
     return d.json()

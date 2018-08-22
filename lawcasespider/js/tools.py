@@ -13,19 +13,30 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(
 wen_shu_js = "";
 with open("md5_20180820.js") as f:
     wen_shu_js += f.read()
-with open("base64_20180820.js") as f:
+with open("base64_200180820_1.js") as f:
+    wen_shu_js += f.read()
+with open('Base64_20180820.js') as f:
     wen_shu_js += f.read()
 with open("sha1.js") as f:
     wen_shu_js += f.read()
+with open('rawinflate_20180820.js') as f:
+    wen_shu_js += f.read()
 with open("wenshu_20180820.js") as f:
     wen_shu_js += f.read()
-# with open(('crack20180820.js')) as f:
-#     wen_shu_js += f.read()
-
-#vl5x = execjs.compile(wen_shu_js).call('test_unzip', 'D9D4E7F3DBE8894C19D617420CA337191FD68CFFE9DB6DD82D857010709EA26DE0772E19137A356A439AD313F91E586208E38FBC939BBC0F684E0BBD49C8844BAF946B20962328010DFD492AEC9A84F0F7184D7294C0743CE65A6F0C33C6B6715463B2839E1649CF4B91B334304155C7')
+uuid = execjs.compile(wen_shu_js).call('guid')
 
 
-# https://wangye.org/tools/scripts/eval/
+def excute_unzip_1(source):
+    if source is not None:
+        context = execjs.compile(wen_shu_js);
+        its = context.call('unzip', source);
+        for it in its.split(";"):
+            if it == '' or it is None:
+                continue
+            rep = it.replace('$hidescript=', '')
+            print(rep)
+            eval(rep)
+        return context.call('unzip', source)
 
 
 # AJLX = "案件类型:民事案件"
@@ -43,15 +54,8 @@ with open("wenshu_20180820.js") as f:
 def init_cookies():
     chromeOptions = webdriver.ChromeOptions()
     chromeOptions.add_argument('--proxy-server=http://' + remote_post_util.ip_config.get("ip_config"))
+    chromeOptions.add_argument('--headless')
     browser = webdriver.Chrome(chrome_options=chromeOptions)
-    # service_args = [
-    #     '--proxy=%s' % remote_post_util.ip_config.get("ip_config"),  # 代理 IP:prot(eg:192.168.0.28:808)
-    #     '--proxy-type=http',  # 代理类型:http/https
-    #     '--load - images = no',  # 关闭图片加载(可选)
-    #     '--disk-cache=yes',  # 开启缓存(可选)
-    #     '--ignore-ssl-errors=true'  # 忽略https错误(可选)
-    # ]
-    # browser = webdriver.PhantomJS(service_args=service_args)
     browser.delete_all_cookies()
     global cookie_dict
     try:
@@ -72,13 +76,10 @@ def init_cookies():
     return cookie_dict
 
 
-# print(vl5x)
-
-case_lawyer = db.get_case_lawyer()
-
-
 def proceed_case_lawyer(case_lawyer):
-    index = 1
+    index = case_lawyer.get("pageindex")
+    if index == 0:
+        index = 1;
     while (True):
         LAWYER = case_lawyer.get("realname")
         LS = case_lawyer.get("office")
@@ -86,8 +87,8 @@ def proceed_case_lawyer(case_lawyer):
         AJLX = None
         CPRQ = None
         cookies = init_cookies()
-        print(wen_shu_js)
         uuid = execjs.compile(wen_shu_js).call('guid')
+        logging.info(uuid)
         vjkl5 = remote_post_util.post_get_vjkl5(uuid, cookies)
         update_vjkl5 = False
         if update_vjkl5:
@@ -101,7 +102,10 @@ def proceed_case_lawyer(case_lawyer):
         page_json = remote_post_util.post_list_context(guid=uuid, vl5x=vl5x, vjkl5=vjkl5, number=number, AJLX=AJLX,
                                                        WSLX=WSLX,
                                                        CPRQ=CPRQ, LAWYER=LAWYER, LS=LS, Index=index, cookies=cookies)
+        if page_json == '[]':
+            return None
         db.insert_case_lawyer_schema(case_lawyer.get("id"), page_json)
+        db.update_case_lawyer_on_sucess(case_lawyer.get("id"), index)
         batch_count = int(json.loads(page_json)[0].get("Count"))
         time.sleep(2)
         if (index * 5 >= batch_count):
@@ -113,7 +117,15 @@ def proceed_case_lawyer(case_lawyer):
 
 
 while True:
-    case_lawyer = db.get_case_lawyer()
-    if case_lawyer is not None:
-        batch_count = proceed_case_lawyer(case_lawyer)
-        db.update_case_lawyer(case_lawyer.get("id"), batch_count)
+    try:
+        case_lawyer = db.get_case_lawyer()
+        if case_lawyer is not None:
+            batch_count = proceed_case_lawyer(case_lawyer)
+            if batch_count < 0 or batch_count is None:
+                db.update_case_lawyer_on_fail(case_lawyer.get("id"))
+                remote_post_util.init_randdom_ip_port()
+            db.update_case_lawyer(case_lawyer.get("id"), batch_count)
+    except Exception as e:
+        db.update_case_lawyer_on_fail(case_lawyer.get("id"))
+        logging.error(e)
+        remote_post_util.init_randdom_ip_port()

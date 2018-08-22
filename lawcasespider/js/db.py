@@ -2,9 +2,10 @@ import pymysql.cursors
 import logging
 import json
 import uuid
+from tools_extends import unzip_helper, doc_id_helper
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S', )
+                    datefmt='%a, %d %b %Y %H:%M:%S', filemode='a', )
 
 '''
 待获取律师信息
@@ -16,14 +17,18 @@ def get_case_lawyer():
                                  db="duowen", charset='utf8')
     # 通过cursor创建游标
     cursor = connection.cursor()
-    sql = 'select id,casenum,deal,office,phone,realname,remarks from case_lawyer where deal=FALSE order by id asc LIMIT 1'
+    sql = 'select id,casenum,deal,office,phone,realname,remarks,`pageindex` from case_lawyer where deal=FALSE and fail<15 order by phone asc LIMIT 1'
     cursor.execute(sql)
     row = cursor.fetchone()
     lawyer = {"id": row[0], "casenum": row[1], "deal": row[2], "office": row[3], "phone": row[4], "realname": row[5],
-              "remarks": row[6]}
+              "remarks": row[6],"pageindex":row[7]}
     connection.close()
     logging.info(lawyer)
     return lawyer
+
+
+def transform_json_data_id(runEval, id):
+    return
 
 
 def insert_case_lawyer_schema(lawyer_id, page_json):
@@ -46,7 +51,13 @@ def insert_case_lawyer_schema(lawyer_id, page_json):
       `json_data_court`
        )  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''';
     json_batch_count = -1
+    global run_eval
+    run_eval = None
+    run_eval_key = None
     for it in page_data:
+        if it.get("RunEval") is not None:
+            run_eval = it.get("RunEval")
+            run_eval_key = unzip_helper(run_eval)
         if it.get("Count") is not None:
             json_batch_count = int(it.get("Count"))
             continue
@@ -55,7 +66,9 @@ def insert_case_lawyer_schema(lawyer_id, page_json):
         json_data_type = it.get("案件类型")
         json_data_date = it.get("裁判日期")
         json_data_name = it.get("案件名称")
-        json_data_id = it.get("文书ID")
+        _json_data_id = doc_id_helper(it.get("文书ID"), run_eval_key);
+        logging.info(_json_data_id)
+        json_data_id = doc_id_helper(it.get("文书ID"), run_eval_key)
         json_data_level = it.get("审判程序")
         json_data_number = it.get("案号")
         json_data_court = it.get("法院名称")
@@ -77,5 +90,27 @@ def update_case_lawyer(lawyer_id, casenum):
     cursor = connection.cursor()
     template_sql = '''update `case_lawyer` set `casenum`= %s,deal=TRUE where `id`= %s''';
     cursor.execute(template_sql, (casenum, lawyer_id))
+    connection.commit()
+    connection.close()
+
+
+def update_case_lawyer_on_sucess(lawyer_id, index):
+    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
+                                 db="duowen", charset='utf8')
+    # 通过cursor创建游标
+    cursor = connection.cursor()
+    template_sql = '''update `case_lawyer` set `pageindex`=%s  where `id`= %s''';
+    cursor.execute(template_sql, (index,lawyer_id,))
+    connection.commit()
+    connection.close()
+
+
+def update_case_lawyer_on_fail(lawyer_id):
+    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
+                                 db="duowen", charset='utf8')
+    # 通过cursor创建游标
+    cursor = connection.cursor()
+    template_sql = '''update `case_lawyer` set fail=fail+1  where `id`= %s''';
+    cursor.execute(template_sql, (lawyer_id,))
     connection.commit()
     connection.close()
