@@ -17,14 +17,25 @@ def get_case_lawyer():
                                  db="duowen", charset='utf8')
     # 通过cursor创建游标
     cursor = connection.cursor()
-    sql = 'select id,casenum,deal,office,phone,realname,remarks,`pageindex` from case_lawyer where deal=FALSE and fail<15 order by phone asc LIMIT 1'
+    sql = 'select id,casenum,deal,office,phone,realname,remarks,`pageindex` from case_lawyer where deal=FALSE and fail<15 and process=0 order by phone asc LIMIT 1'
     cursor.execute(sql)
     row = cursor.fetchone()
     lawyer = {"id": row[0], "casenum": row[1], "deal": row[2], "office": row[3], "phone": row[4], "realname": row[5],
-              "remarks": row[6],"pageindex":row[7]}
+              "remarks": row[6], "pageindex": row[7]}
     connection.close()
+    update_case_lawyer_process(1, lawyer.get("id"));
     logging.info(lawyer)
     return lawyer
+
+
+def update_case_lawyer_process(process, lawyer_id):
+    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
+                                 db="duowen", charset='utf8')
+    # 通过cursor创建游标
+    cursor = connection.cursor()
+    template_sql = '''update `case_lawyer` set `process`= %s where `id`= %s''';
+    cursor.execute(template_sql, (process, lawyer_id))
+    connection.commit()
 
 
 def transform_json_data_id(runEval, id):
@@ -92,6 +103,7 @@ def update_case_lawyer(lawyer_id, casenum):
     cursor.execute(template_sql, (casenum, lawyer_id))
     connection.commit()
     connection.close()
+    update_case_lawyer_process(0, lawyer_id);
 
 
 def update_case_lawyer_on_sucess(lawyer_id, index):
@@ -100,7 +112,7 @@ def update_case_lawyer_on_sucess(lawyer_id, index):
     # 通过cursor创建游标
     cursor = connection.cursor()
     template_sql = '''update `case_lawyer` set `pageindex`=%s  where `id`= %s''';
-    cursor.execute(template_sql, (index,lawyer_id,))
+    cursor.execute(template_sql, (index, lawyer_id,))
     connection.commit()
     connection.close()
 
@@ -114,3 +126,4 @@ def update_case_lawyer_on_fail(lawyer_id):
     cursor.execute(template_sql, (lawyer_id,))
     connection.commit()
     connection.close()
+    update_case_lawyer_process(0, lawyer_id);

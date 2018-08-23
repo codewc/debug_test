@@ -9,7 +9,7 @@ from selenium import webdriver
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
-
+time.sleep(1)
 wen_shu_js = "";
 with open("md5_20180820.js") as f:
     wen_shu_js += f.read()
@@ -24,6 +24,7 @@ with open('rawinflate_20180820.js') as f:
 with open("wenshu_20180820.js") as f:
     wen_shu_js += f.read()
 uuid = execjs.compile(wen_shu_js).call('guid')
+logging.info(wen_shu_js)
 
 
 def excute_unzip_1(source):

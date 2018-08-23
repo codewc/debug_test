@@ -1,0 +1,25 @@
+[INFO  - 2018-08-23T04:34:00.318Z] GhostDriver - Main - running on port 52177
+[INFO  - 2018-08-23T04:34:02.400Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - page.settings - {"XSSAuditingEnabled":false,"javascriptCanCloseWindows":true,"javascriptCanOpenWindows":true,"javascriptEnabled":true,"loadImages":true,"localToRemoteUrlAccessEnabled":false,"userAgent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1","webSecurityEnabled":true}
+[INFO  - 2018-08-23T04:34:02.401Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - page.customHeaders:  - {}
+[INFO  - 2018-08-23T04:34:02.401Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - Session.negotiatedCapabilities - {"browserName":"phantomjs","version":"2.1.1","driverName":"ghostdriver","driverVersion":"1.2.0","platform":"windows-7-32bit","javascriptEnabled":true,"takesScreenshot":true,"handlesAlerts":false,"databaseEnabled":false,"locationContextEnabled":false,"applicationCacheEnabled":false,"browserConnectionEnabled":false,"cssSelectorsEnabled":true,"webStorageEnabled":false,"rotatable":false,"acceptSslCerts":false,"nativeEvents":true,"proxy":{"proxyType":"direct"}}
+[INFO  - 2018-08-23T04:34:02.401Z] SessionManagerReqHand - _postNewSessionCommand - New Session Created: c2d0e630-a68d-11e8-b622-a32953adc52e
+[ERROR - 2018-08-23T04:34:02.595Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - page.onError - msg: TypeError: null is not an object (evaluating 'document.getElementById("doc_id_result").innerText = realid.toString()')
+
+  phantomjs://platform/console++.js:263 in error
+[ERROR - 2018-08-23T04:34:02.596Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - page.onError - stack:
+  doc_id_helper (file:///C:/Users/Administrator/Desktop/%E5%88%97%E8%A1%A8%E9%A1%B5%20-%20%E4%B8%AD%E5%9B%BD%E8%A3%81%E5%88%A4%E6%96%87%E4%B9%A6%E7%BD%91_files/after.js:59)
+
+  phantomjs://platform/console++.js:263 in error
+[ERROR - 2018-08-23T04:34:02.703Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - page.onError - msg: TypeError: undefined is not an object (evaluating 'browserMatch.browser')
+
+  phantomjs://platform/console++.js:263 in error
+[ERROR - 2018-08-23T04:34:02.703Z] Session [c2d0e630-a68d-11e8-b622-a32953adc52e] - page.onError - stack:
+  (anonymous function) (file:///C:/Users/Administrator/Desktop/%E5%88%97%E8%A1%A8%E9%A1%B5%20-%20%E4%B8%AD%E5%9B%BD%E8%A3%81%E5%88%A4%E6%96%87%E4%B9%A6%E7%BD%91_files/framework.js.%E4%B8%8B%E8%BD%BD:95)
+  f (file:///C:/Users/Administrator/Desktop/%E5%88%97%E8%A1%A8%E9%A1%B5%20-%20%E4%B8%AD%E5%9B%BD%E8%A3%81%E5%88%A4%E6%96%87%E4%B9%A6%E7%BD%91_files/jquery-1.9.0.min.js.%E4%B8%8B%E8%BD%BD:1)
+  fireWith (file:///C:/Users/Administrator/Desktop/%E5%88%97%E8%A1%A8%E9%A1%B5%20-%20%E4%B8%AD%E5%9B%BD%E8%A3%81%E5%88%A4%E6%96%87%E4%B9%A6%E7%BD%91_files/jquery-1.9.0.min.js.%E4%B8%8B%E8%BD%BD:1)
+  ready (file:///C:/Users/Administrator/Desktop/%E5%88%97%E8%A1%A8%E9%A1%B5%20-%20%E4%B8%AD%E5%9B%BD%E8%A3%81%E5%88%A4%E6%96%87%E4%B9%A6%E7%BD%91_files/jquery-1.9.0.min.js.%E4%B8%8B%E8%BD%BD:1)
+  xt (file:///C:/Users/Administrator/Desktop/%E5%88%97%E8%A1%A8%E9%A1%B5%20-%20%E4%B8%AD%E5%9B%BD%E8%A3%81%E5%88%A4%E6%96%87%E4%B9%A6%E7%BD%91_files/jquery-1.9.0.min.js.%E4%B8%8B%E8%BD%BD:1)
+
+  phantomjs://platform/console++.js:263 in error
+[INFO  - 2018-08-23T04:34:19.256Z] SessionManagerReqHand - _cleanupWindowlessSessions - Asynchronous Sessions clean-up phase starting NOW
+[INFO  - 2018-08-23T04:34:19.257Z] SessionManagerReqHand - _cleanupWindowlessSessions - Deleted Session '1b0aeae0-a68d-11e8-95b8-0532a67767a2', because windowless
