@@ -1,15 +1,14 @@
-import execjs
-
-import remote_post_util
-import db
-import time
-import logging
 import json
+import logging
+
+import execjs
 from selenium import webdriver
+
+import db
+import remote_post_util
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
-time.sleep(1)
 wen_shu_js = "";
 with open("md5_20180820.js") as f:
     wen_shu_js += f.read()
@@ -108,7 +107,6 @@ def proceed_case_lawyer(case_lawyer):
         db.insert_case_lawyer_schema(case_lawyer.get("id"), page_json)
         db.update_case_lawyer_on_sucess(case_lawyer.get("id"), index)
         batch_count = int(json.loads(page_json)[0].get("Count"))
-        time.sleep(2)
         if (index * 5 >= batch_count):
             return batch_count
             break
