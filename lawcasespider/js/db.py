@@ -1,7 +1,10 @@
-import pymysql.cursors
-import logging
 import json
+import logging
 import uuid
+
+from pymysql.err import IntegrityError
+
+import dbtools.helper as db_helper
 from tools_extends import unzip_helper, doc_id_helper
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -13,40 +16,22 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(
 
 
 def get_case_lawyer():
-    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
-                                 db="duowen", charset='utf8')
-    # 通过cursor创建游标
-    cursor = connection.cursor()
-    sql = 'select id,casenum,deal,office,phone,realname,remarks,`pageindex` from case_lawyer where deal=FALSE and fail<15 and process=0 order by phone asc LIMIT 1'
-    cursor.execute(sql)
-    row = cursor.fetchone()
-    lawyer = {"id": row[0], "casenum": row[1], "deal": row[2], "office": row[3], "phone": row[4], "realname": row[5],
-              "remarks": row[6], "pageindex": row[7]}
-    connection.close()
-    update_case_lawyer_process(1, lawyer.get("id"));
-    logging.info(lawyer)
-    return lawyer
+    sql = 'select id,casenum,deal,office,phone,realname,remarks,`pageindex`,`repeatcont` from case_lawyer where deal=FALSE and fail<15 and process=0  and remark = 1 order by phone asc LIMIT 1'
+    row = db_helper.fetch_one(sql)
+    update_case_lawyer_process(1, row.get("id"));
+    logging.info(row)
+    return row
 
 
 def update_case_lawyer_process(process, lawyer_id):
-    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
-                                 db="duowen", charset='utf8')
-    # 通过cursor创建游标
-    cursor = connection.cursor()
     template_sql = '''update `case_lawyer` set `process`= %s where `id`= %s''';
-    cursor.execute(template_sql, (process, lawyer_id))
-    connection.commit()
-
-
-def transform_json_data_id(runEval, id):
-    return
+    db_helper.update(template_sql, (process, lawyer_id))
 
 
 def insert_case_lawyer_schema(lawyer_id, page_json):
-    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
-                                 db="duowen", charset='utf8')
+    global remark
+    remark = True
     # 通过cursor创建游标
-    cursor = connection.cursor()
     page_data = json.loads(page_json)
     template_sql = '''INSERT INTO `case_lawyer_schema`
      (`id`,
@@ -84,46 +69,30 @@ def insert_case_lawyer_schema(lawyer_id, page_json):
         json_data_number = it.get("案号")
         json_data_court = it.get("法院名称")
         try:
-            cursor.execute(template_sql, (
+            db_helper.insert(template_sql, (
                 id, lawyer_id, json_batch_count, json_data_context, json_data_type, json_data_date, json_data_name,
                 json_data_id, json_data_level, json_data_number, json_data_court))
-            connection.commit()
-        except Exception as exception:
+        except IntegrityError:
+            remark = False
+            logging.exception("发生了错误 IntegrityError")
+            db_helper.update('update case_lawyer set repeatcont=repeatcont+1 where id=%s', (lawyer_id,))
+        except Exception:
             logging.exception("发生了错误")
-    connection.close()
-    return page_json
+    return remark
 
 
 def update_case_lawyer(lawyer_id, casenum):
-    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
-                                 db="duowen", charset='utf8')
-    # 通过cursor创建游标
-    cursor = connection.cursor()
     template_sql = '''update `case_lawyer` set `casenum`= %s,deal=TRUE where `id`= %s''';
-    cursor.execute(template_sql, (casenum, lawyer_id))
-    connection.commit()
-    connection.close()
+    db_helper.update(template_sql, (casenum, lawyer_id))
     update_case_lawyer_process(0, lawyer_id);
 
 
 def update_case_lawyer_on_sucess(lawyer_id, index):
-    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
-                                 db="duowen", charset='utf8')
-    # 通过cursor创建游标
-    cursor = connection.cursor()
     template_sql = '''update `case_lawyer` set `pageindex`=%s  where `id`= %s''';
-    cursor.execute(template_sql, (index, lawyer_id,))
-    connection.commit()
-    connection.close()
+    db_helper.update(template_sql, (index, lawyer_id,))
 
 
 def update_case_lawyer_on_fail(lawyer_id):
-    connection = pymysql.connect(host="120.76.138.153", port=3307, user="root", password="faduceshi123!@#",
-                                 db="duowen", charset='utf8')
-    # 通过cursor创建游标
-    cursor = connection.cursor()
     template_sql = '''update `case_lawyer` set fail=fail+1  where `id`= %s''';
-    cursor.execute(template_sql, (lawyer_id,))
-    connection.commit()
-    connection.close()
+    db_helper.update(template_sql, (lawyer_id,))
     update_case_lawyer_process(0, lawyer_id);

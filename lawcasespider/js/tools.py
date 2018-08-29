@@ -54,6 +54,7 @@ def excute_unzip_1(source):
 def init_cookies():
     chromeOptions = webdriver.ChromeOptions()
     chromeOptions.add_argument('--proxy-server=http://' + remote_post_util.ip_config.get("ip_config"))
+    chromeOptions.add_argument("--no-sandbox")
     chromeOptions.add_argument('--headless')
     browser = webdriver.Chrome(chrome_options=chromeOptions)
     browser.delete_all_cookies()
@@ -78,8 +79,8 @@ def init_cookies():
 
 def proceed_case_lawyer(case_lawyer):
     index = case_lawyer.get("pageindex")
-    if index == 0:
-        index = 1;
+    index = index + 1
+    repeat_count = case_lawyer.get('repeatcont')
     while (True):
         LAWYER = case_lawyer.get("realname")
         LS = case_lawyer.get("office")
@@ -104,10 +105,11 @@ def proceed_case_lawyer(case_lawyer):
                                                        CPRQ=CPRQ, LAWYER=LAWYER, LS=LS, Index=index, cookies=cookies)
         if page_json == '[]':
             return None
-        db.insert_case_lawyer_schema(case_lawyer.get("id"), page_json)
+        if not db.insert_case_lawyer_schema(case_lawyer.get("id"), page_json):
+            repeat_count = repeat_count + 1
         db.update_case_lawyer_on_sucess(case_lawyer.get("id"), index)
         batch_count = int(json.loads(page_json)[0].get("Count"))
-        if (index * 5 >= batch_count):
+        if (index * 5 >= batch_count or repeat_count > 15):
             return batch_count
             break
         if batch_count > 90:

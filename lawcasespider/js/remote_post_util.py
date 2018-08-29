@@ -1,10 +1,10 @@
 import logging
+import random
+import urllib.parse as urlParse
 import urllib.parse as urlparse
 
 import requests
-import urllib.parse as urlParse
-from selenium import webdriver
-import random
+
 from ip_tools import get_ip
 
 global proxies
@@ -109,7 +109,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
         headers=headers,
         proxies=proxies,
         data=payload,
-        timeout=120,
+        timeout=30,
     )
     print("http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon.format(CPRQ, CPRQ))
     # print(res.text)
@@ -158,7 +158,7 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYE
     logging.info(payload)
     logging.info(headers)
     d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies,
-                      timeout=120)
+                      timeout=15)
     return d.text
 
 
@@ -220,6 +220,6 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
     logging.info(payload)
     logging.info(headers)
     d = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers, proxies=proxies,
-                      timeout=120)
+                      timeout=30)
     logging.info(d.json())
     return d.json()

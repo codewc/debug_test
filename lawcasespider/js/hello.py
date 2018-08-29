@@ -1,12 +1,15 @@
-import time
-import logging
-import remote_post_util
+def proceed_case_lawyer():
+    index = 1
+    repeat_count = 0
+    batch_count = 15
+    while (True):
+        if True:
+            repeat_count = repeat_count + 1
+        if (index * 5 >= 15 or repeat_count > 15):
+            return batch_count
+            break
+        if batch_count > 90:
+            return -1
+        index = index + 1
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S', )
-while True:
-    print('hello')
-    logging.info('hello')
-    logging.info(remote_post_util.my_headers)
-    raise Exception("hbaabab")
-    time.sleep(10)
+proceed_case_lawyer()
