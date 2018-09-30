@@ -1,8 +1,8 @@
+# coding=utf8
 import json
 import logging
 
 import execjs
-from selenium import webdriver
 
 import db
 import remote_post_util
@@ -20,7 +20,7 @@ with open("sha1.js") as f:
     wen_shu_js += f.read()
 with open('rawinflate_20180820.js') as f:
     wen_shu_js += f.read()
-with open("wenshu_20180820.js") as f:
+with open("./20180927/wenshu_20180820.js") as f:
     wen_shu_js += f.read()
 uuid = execjs.compile(wen_shu_js).call('guid')
 logging.info(wen_shu_js)
@@ -45,88 +45,118 @@ def excute_unzip_1(source):
 # LAWYER = "张娟"
 # LS = "安徽烁光律师事务所"
 # CPRQ = '2018-08-06'
-
-'''
-初始化cookies值
-'''
-
-
-def init_cookies():
-    chromeOptions = webdriver.ChromeOptions()
-    chromeOptions.add_argument('--proxy-server=http://' + remote_post_util.ip_config.get("ip_config"))
-    chromeOptions.add_argument("--no-sandbox")
-    chromeOptions.add_argument('--headless')
-    browser = webdriver.Chrome(chrome_options=chromeOptions)
-    browser.delete_all_cookies()
-    global cookie_dict
-    try:
-        browser.get("http://wenshu.court.gov.cn")
-        Hm_lvt = browser.get_cookie("Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2")['value']
-        Hm_lpvt = browser.get_cookie("Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2")['value']
-        gscu = browser.get_cookie("_gscu_2116842793")['value']
-        gscs = browser.get_cookie("_gscs_2116842793")['value']
-        cookie_dict = {
-            'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2': Hm_lvt,
-            'Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2': Hm_lpvt,
-            '_gscu_2116842793': gscu,
-            '_gscs_2116842793': gscs,
-        }
-        logging.info(cookie_dict)
-    finally:
-        browser.quit()
-    return cookie_dict
-
-
 def proceed_case_lawyer(case_lawyer):
     index = case_lawyer.get("pageindex")
     index = index + 1
     repeat_count = case_lawyer.get('repeatcont')
+    _try = 0;
     while (True):
         LAWYER = case_lawyer.get("realname")
         LS = case_lawyer.get("office")
         WSLX = None
         AJLX = None
         CPRQ = None
-        cookies = init_cookies()
         uuid = execjs.compile(wen_shu_js).call('guid')
+        page_num = 20
         logging.info(uuid)
-        vjkl5 = remote_post_util.post_get_vjkl5(uuid, cookies)
+        vjkl5 = remote_post_util.post_get_vjkl5(uuid, {})
         update_vjkl5 = False
         if update_vjkl5:
             vjkl5 = remote_post_util.post_get_vjkl5(uuid)
-            update_vjkl5 = False
         vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
         uuid = execjs.compile(wen_shu_js).call('guid')
-        number = remote_post_util.post_get_number(guid=uuid, vjkl5=vjkl5, AJLX=AJLX, WSLX=WSLX, CPRQ=CPRQ,
-                                                  LAWYER=LAWYER,
-                                                  LS=LS, cookies=cookies)
-        page_json = remote_post_util.post_list_context(guid=uuid, vl5x=vl5x, vjkl5=vjkl5, number=number, AJLX=AJLX,
+        page_json = remote_post_util.post_list_context(guid=uuid, vl5x=vl5x, vjkl5=vjkl5, number="&gui", AJLX=AJLX,
                                                        WSLX=WSLX,
-                                                       CPRQ=CPRQ, LAWYER=LAWYER, LS=LS, Index=index, cookies=cookies)
-        if page_json == '[]':
+                                                       CPRQ=CPRQ, LAWYER=LAWYER, LS=LS, Index=index, cookies={})
+        if str(page_json).startswith("[]"):
+            _try = _try + 1;
+            if _try <= 6:
+                logging.info("重试：[]'" + str(_try) + "次")
+                continue
             return None
-        if not db.insert_case_lawyer_schema(case_lawyer.get("id"), page_json):
+        if str(page_json).startswith("remind"):
+            remote_post_util.init_randdom_ip_port()
+            continue
+        if str(page_json).find("RunEval") == -1:
+            return None
+        if str(page_json).find("Count") == -1:
+            logging.warning("Count没有值" + str(page_json))
+            batch_count = 0
+        else:
+            batch_count = int(json.loads(page_json)[0].get("Count"))
+        if not db.insert_case_lawyer_schema_before(case_lawyer.get("id"), page_json, index, batch_count, page_num):
             repeat_count = repeat_count + 1
         db.update_case_lawyer_on_sucess(case_lawyer.get("id"), index)
-        batch_count = int(json.loads(page_json)[0].get("Count"))
-        if (index * 5 >= batch_count or repeat_count > 15):
+        if (index * page_num >= batch_count):
             return batch_count
             break
-        if batch_count > 90:
-            return -1
         index = index + 1
 
 
-while True:
+def init_court_tree(condition="裁判日期:2018-08-09 TO 2018-08-09"):
+    guid = execjs.compile(wen_shu_js).call('guid')
+    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
+    vjkl5 = remote_post_util.post_get_vjkl5_url(uuid, url=referer)
+    vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
+    number = 'wens'  # remote_post_util.post_get_number(guid, vjkl5, referer)
+    condition = condition
+    json_text = remote_post_util.list_tree_content(condition, vl5x, guid, number, vjkl5)
+    json_data = json.loads(json_text)
+    ret_context = []
+    for it in json_data:
+        print(it)
+        if it.get("Key") == "法院地域":  #
+            child = it.get("Child")
+            int_value = it.get("IntValue")
+            ret_context.append(int_value)
+            for _child_it in child:
+                _child_key = _child_it.get("Key")
+                _child_value = _child_it.get("Value")
+                _child_field = _child_it.get("Field")
+                if _child_key == "":
+                    continue
+                _child_value = int(_child_value)
+                if _child_value == 0:  # 没有值,do nothing
+                    continue
+                if _child_value <= 200:
+                    ret_context.append({"{},{}:{}".format(condition, _child_field, _child_key): _child_value})
+                    continue
+                remote_post_util.proceed_court_tree_context(condition, _child_field, _child_key, ret_context)
+            break
+        else:
+            continue
+    print(ret_context)
+
+
+def post_test(param):
+    guid = execjs.compile(wen_shu_js).call('guid')
+    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
+    vjkl5 = remote_post_util.post_get_vjkl5_url(uuid, url=referer)
+    vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
+    number = 'wens'  # remote_post_util.post_get_number(guid, vjkl5, referer)
+    json_text = remote_post_util.post_list_context_by_param(guid, vjkl5, vl5x, number, param, page=6)
+    print(json_text)
+
+
+if __name__ == "__main__":
+    # init_court_tree()
+    post_test("裁判日期:2018-08-09 TO 2018-08-09,基层法院:北京市石景山区人民法院")
+
+
+def execute():
     try:
         case_lawyer = db.get_case_lawyer()
         if case_lawyer is not None:
             batch_count = proceed_case_lawyer(case_lawyer)
-            if batch_count < 0 or batch_count is None:
+            if batch_count is None or batch_count < 0:
                 db.update_case_lawyer_on_fail(case_lawyer.get("id"))
-                remote_post_util.init_randdom_ip_port()
-            db.update_case_lawyer(case_lawyer.get("id"), batch_count)
+            else:
+                db.update_case_lawyer(case_lawyer.get("id"), batch_count)
     except Exception as e:
         db.update_case_lawyer_on_fail(case_lawyer.get("id"))
-        logging.error(e)
+        logging.exception("error")
         remote_post_util.init_randdom_ip_port()
+
+
+while True:
+    execute()

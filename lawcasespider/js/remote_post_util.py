@@ -2,14 +2,14 @@ import logging
 import random
 import urllib.parse as urlParse
 import urllib.parse as urlparse
-
+import json
 import requests
 
 from ip_tools import get_ip
 
 global proxies
 global ip_config
-
+proxies = {}
 my_headers = [
     "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36",
@@ -73,7 +73,8 @@ def init_randdom_ip_port():
     }
 
 
-init_randdom_ip_port()
+# FIXME:
+# init_randdom_ip_port()
 
 
 def get_randdom_header():
@@ -82,13 +83,6 @@ def get_randdom_header():
 
 
 def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
-    # http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=4e1ea9ed-1930-cae981f3-368067fde505&conditions=searchWord++CPRQ++裁判日期:2018-08-04   TO   2018-08-04
-    # res = requests.post(
-    #     "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=4e1ea9ed-1930-cae981f3-368067fde505&conditions=searchWord++CPRQ++裁判日期:2018-08-04   TO   2018-08-04",
-    #     headers=headers)
-    # print(res.text)
-    # print(res.cookies)
-
     conditon = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}"
     # conditons = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}".format(CPRQ, CPRQ)
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -98,14 +92,17 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
                'Cache-Control': 'max-age=0',
                'Host': 'wenshu.court.gov.cn',
                'Upgrade-Insecure-Requests': '1',
-               # 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
                'User-Agent': get_randdom_header(),
                }
-    payload = {"guid": guid, "sorttype": 1, "number": "",
-               "conditions": 'searchWord  CPRQ  裁判日期:{} TO {}'.format(CPRQ, CPRQ)}  # 先写死
+    payload = {"guid": guid,
+               "sorttype": 1,
+               "number": "",
+               # "conditions": 'searchWord  CPRQ  裁判日期:{} TO {}'.format(CPRQ, CPRQ)
+               "conditions": 'searchWord 1 AJLX  案件类型:刑事案件',
+               "conditions": 'searchWord 1 WSLX  文书类型:判决书',
+               }  # 先写死
     res = requests.post(
         url="http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon.format(CPRQ, CPRQ),
-        # url="http://www.sohu.com/",
         headers=headers,
         proxies=proxies,
         data=payload,
@@ -117,12 +114,51 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     return res.cookies.get("vjkl5")
 
 
-'''
-去获取请求number参数
-'''
+def post_get_vjkl5_url(guid, url=""):
+    headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Cache-Control': 'max-age=0',
+               'Host': 'wenshu.court.gov.cn',
+               'Upgrade-Insecure-Requests': '1',
+               'User-Agent': get_randdom_header(),
+               }
+    payload = {"guid": "",
+               "sorttype": 1,
+               "number": "",
+               "conditions": 'searchWord 2 AJLX  案件类型:民事案件',
+               # "conditions": 'searchWord  CPRQ  裁判日期:2018-09-01  TO  2018-09-01',
+               # "conditions": 'searchWord 与公司、证券、保险、票据等有关的民事纠纷   二级案由:与公司、证券、保险、票据等有关的民事纠纷',
+               # "conditions": 'searchWord 2 AJLX  案件类型:民事案件',
+               # "conditions": 'searchWord 保险人代位求偿权纠纷   五级案由: 保险人代位求偿权纠纷',
+               }  # 先写死
+    res = requests.post(
+        url=url,
+        headers=headers,
+        proxies=proxies,
+        data=payload,
+        timeout=30,
+    )
+    print(url)
+    # print(res.text)
+    logging.info(res.cookies)
+    return res.cookies.get("vjkl5")
 
 
 def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, cookies={}):
+    """
+    去获取请求number参数
+    :param guid:
+    :param vjkl5:
+    :param AJLX:
+    :param WSLX:
+    :param CPRQ:
+    :param LS:
+    :param LAWYER:
+    :param cookies:
+    :return:
+    """
     condition = "";
     if AJLX is not None:
         condition += data_dict.get(AJLX)
@@ -146,12 +182,10 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYE
                'Connection': 'keep-alive',
                'Content-Length': '40',
                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-               # 'Cookie': 'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; _gscu_2116842793=3430082807nzm686; _gscbrs_2116842793=1; _gscs_2116842793=343008280aveh586|pv:2; Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; vjkl5=' + vjkl5,
                'Cookie': head_cookie + 'vjkl5=' + vjkl5,
                'Host': 'wenshu.court.gov.cn',
                'Origin': 'http://wenshu.court.gov.cn',
                'Referer': 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=' + guid + condition,
-               # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
                'User-Agent': get_randdom_header(),
                'X-Requested-With': 'XMLHttpRequest',
                }
@@ -159,16 +193,52 @@ def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYE
     logging.info(headers)
     d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies,
                       timeout=15)
+    logging.info("number=" + d.text)
     return d.text
 
 
-'''
-去获取内容
-'''
+def post_get_number(guid, vjkl5, referer):
+    payload = {"guid": guid, }
+    headers = {'Accept': '*/*',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Length': '40',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Cookie': 'vjkl5=' + vjkl5,
+               'Host': 'wenshu.court.gov.cn',
+               'Origin': 'http://wenshu.court.gov.cn',
+               'Referer': referer,
+               'User-Agent': get_randdom_header(),
+               'X-Requested-With': 'XMLHttpRequest',
+               }
+    logging.info(payload)
+    logging.info(headers)
+    d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies,
+                      timeout=15)
+    logging.info("number=" + d.text)
+    return d.text
 
 
-def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, Index=1, Page=5,
+def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, Index=1,
+                      page=20,
                       cookies={}):
+    """
+    去获取内容
+    :param guid:
+    :param vjkl5:
+    :param vl5x:
+    :param number:
+    :param AJLX:
+    :param WSLX:
+    :param CPRQ:
+    :param LS:
+    :param LAWYER:
+    :param Index:
+    :param page:
+    :param cookies:
+    :return:
+    """
     sep = ","
     param = {'Param': ''}
     condition = "";
@@ -196,9 +266,9 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
     param['Param'] = param['Param'][:-1]  # 去除最后一个逗号sep
     payload = {'Param': param['Param'],
                'Index': Index,
-               'Page': 5,
-               'Order': '法院层级',
-               'Direction': 'asc',
+               'Page': page,
+               'Order': '裁判日期',
+               'Direction': 'desc',
                'vl5x': vl5x,
                'number': number,
                'guid': guid,
@@ -207,9 +277,7 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
                'Connection': 'keep-alive',
-               # 'Content-Length': '5000',
                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-               # 'Cookie': 'Hm_lvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; _gscu_2116842793=3430082807nzm686; _gscbrs_2116842793=1; _gscs_2116842793=343008280aveh586|pv:2; Hm_lpvt_d2caefee2de09b8a6ea438d74fd98db2=1534386180; vjkl5=' + vjkl5,
                'Cookie': head_cookie + 'vjkl5=' + vjkl5,
                'Host': 'wenshu.court.gov.cn',
                'Origin': 'http://wenshu.court.gov.cn',
@@ -219,7 +287,207 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
                }
     logging.info(payload)
     logging.info(headers)
-    d = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers, proxies=proxies,
-                      timeout=30)
-    logging.info(d.json())
-    return d.json()
+    ret = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers,
+                        proxies=proxies,
+                        timeout=30)
+    logging.info(ret.json())
+    ret.close()
+    return ret.json()
+
+
+def post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=1, page=20, cookies={}):
+    payload = {'Param': param,
+               'Index': index,
+               'Page': page,
+               'Order': '裁判日期',
+               'Direction': 'desc',
+               'vl5x': vl5x,
+               'number': number,
+               'guid': guid,
+               }
+    headers = {'Accept': '*/*',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Cookie': 'vjkl5=' + vjkl5,
+               'Host': 'wenshu.court.gov.cn',
+               'Origin': 'http://wenshu.court.gov.cn',
+               'Referer': 'http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=' + guid,
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest',
+               }
+    logging.info(payload)
+    logging.info(headers)
+    ret = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers,
+                        proxies=proxies,
+                        timeout=30)
+    logging.info(ret.json())
+    ret.close()
+    return ret.json()
+
+def list_tree_content(param, vl5x, guid, number, vjkl5):
+    """
+    获取目录树
+    :return:
+    """
+    payload = {'Param': param,
+               'vl5x': vl5x,
+               'guid': guid,
+               'number': number,
+               }
+    headers = {'Accept': '*/*',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Host': 'wenshu.court.gov.cn',
+               'Origin': 'http://wenshu.court.gov.cn',
+               'Cookie': 'vjkl5=' + vjkl5,
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest',
+               }
+    logging.info(payload)
+    logging.info(headers)
+    ret = requests.post(url='http://wenshu.court.gov.cn/List/TreeContent', data=payload, headers=headers,
+                        proxies=proxies,
+                        timeout=30)
+    json_text = ret.json()
+    ret.close()
+    logging.info(json_text)
+    return json_text
+
+
+def proceed_tree_context(condition="裁判日期:2018-09-01 TO 2018-09-01", ret_context=[], level=None, level_name=None):
+    """
+    生成当日，条件，获取搜索条件任务。再进行抓取
+    :param condition: 大类业务条件：当天日期截取
+    :param level: 案由级别
+    :param level_name  案由名字
+    :return: ret_context 保存搜索算法容器
+    """
+    param = "{},{}:{}".format(condition, level, level_name)
+    payload = {'Param': param,
+               'parval': level_name,
+               }
+    headers = {'Accept': '*/*',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Host': 'wenshu.court.gov.cn',
+               'Origin': 'http://wenshu.court.gov.cn',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest',
+               }
+    logging.info(payload)
+    logging.info(headers)
+    ret = requests.post(url='http://wenshu.court.gov.cn/List/ReasonTreeContent', data=payload, headers=headers,
+                        proxies=proxies,
+                        timeout=30)
+    json_text = ret.json()
+    logging.info(json_text)
+    json_var = json.loads(json_text)
+    count = int(json_var[0].get("IntValue"))
+    if count <= 0:
+        logging.info("{} 条件舍弃未有文书".format(param))
+    elif count <= 200:
+        ret_context.append({param: count})  # 统计算法数，理论存在文档数
+    else:
+        for it in json_var[0].get("Child"):
+            sub_condition = it.get("Key")
+            int_value = it.get("IntValue")
+            field = it.get("Field")
+            if sub_condition == "" or int_value == 0:
+                continue
+            if int_value <= 200 or field == "五级案由":
+                ret_context.append({"{},{}:{}".format(condition, field, constant): int_value})
+            else:
+                proceed_tree_context(condition, ret_context, field, sub_condition)
+
+
+def proceed_court_tree_context(condition="裁判日期:2018-09-01 TO 2018-09-01", field="", key="", ret_context=[]):
+    """
+       按地域及法院筛选，获取搜索条件任务。再进行抓取
+       :param condition: 大类业务条件：当天日期截取
+       :param append_condition: 增加条件
+       :return: ret_context 保存搜索算法容器
+       """
+    param = "{},{}:{}".format(condition, field, key)
+    json_text = post_court_tree_context(param, key)
+    logging.info(json_text)
+    try:
+        json_var = json.loads(json_text)
+    except Exception:
+        logging.error(json_text)
+        ret_context.append({"{},{}:{}".format(condition, field, key): 0})
+        return
+
+    count = int(json_var[0].get("IntValue"))
+    if count <= 0:
+        logging.info("{} 条件舍弃未有文书".format(param))
+    elif count <= 200:
+        ret_context.append({param: count})  # 统计算法数，理论存在文档数
+    else:
+        for it in json_var[0].get("Child"):
+            _key = it.get("Key")
+            _int_value = it.get("IntValue")
+            _field = it.get("Field")
+            if _key == "" or _int_value == 0:
+                continue
+            if _int_value <= 200 or _field == "基层法院":
+                ret_context.append({"{},{}:{}".format(condition, _field, _key): _int_value})
+                continue
+            else:
+                proceed_court_tree_context(condition, _field, _key, ret_context)
+
+
+def post_court_tree_context(param, key, retry=6):
+    payload = {'Param': param,
+               'parval': key,
+               }
+    headers = {'Accept': '*/*',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Host': 'wenshu.court.gov.cn',
+               'Origin': 'http://wenshu.court.gov.cn',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest',
+               }
+    logging.info(payload)
+    logging.info(headers)
+    success = False
+    count = 0
+    json_text = ""
+    while not success:
+        if count >= retry:
+            return json_text
+
+        count += 1
+        ret = requests.post(url='http://wenshu.court.gov.cn/List/CourtTreeContent', data=payload, headers=headers,
+                            proxies=proxies,
+                            timeout=30)
+        json_text = ret.json()
+        ret.close()
+        if "Key" in json_text:
+            success = True
+        else:
+            logging.warning("重试->" + str(count) + str(payload))
+    return json_text
+
+
+if __name__ == "__main__":
+    condition_constant = {
+        '刑事案由',
+        '民事案由',
+        '行政案由',
+        '赔偿案由',
+    }
+    ret_context = []
+    condition = "裁判日期:2018-09-01 TO 2018-09-01"
+    logging.info("开始生成：->搜索条件；condition={}".format(condition))
+    for constant in condition_constant:  # 一级案由
+        proceed_tree_context(condition, ret_context, "一级案由", constant)
+    logging.info("条件算法树生成完毕：->" + str(ret_context))
