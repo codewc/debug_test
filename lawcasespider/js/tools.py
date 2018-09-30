@@ -1,6 +1,7 @@
 # coding=utf8
 import json
 import logging
+import os
 
 import execjs
 
@@ -9,18 +10,18 @@ import remote_post_util
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
-wen_shu_js = "";
-with open("md5_20180820.js") as f:
+wen_shu_js = ""
+with open(os.curdir + "./md5_20180820.js") as f:
     wen_shu_js += f.read()
-with open("base64_200180820_1.js") as f:
+with open(os.curdir + "./base64_200180820_1.js") as f:
     wen_shu_js += f.read()
-with open('Base64_20180820.js') as f:
+with open(os.curdir + './Base64_20180820.js') as f:
     wen_shu_js += f.read()
-with open("sha1.js") as f:
+with open(os.curdir + "./sha1.js") as f:
     wen_shu_js += f.read()
-with open('rawinflate_20180820.js') as f:
+with open(os.curdir + './rawinflate_20180820.js') as f:
     wen_shu_js += f.read()
-with open("./20180927/wenshu_20180820.js") as f:
+with open(os.curdir + "./20180927/wenshu_20180820.js") as f:
     wen_shu_js += f.read()
 uuid = execjs.compile(wen_shu_js).call('guid')
 logging.info(wen_shu_js)
@@ -125,22 +126,7 @@ def init_court_tree(condition="裁判日期:2018-08-09 TO 2018-08-09"):
             break
         else:
             continue
-    print(ret_context)
-
-
-def post_test(param):
-    guid = execjs.compile(wen_shu_js).call('guid')
-    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
-    vjkl5 = remote_post_util.post_get_vjkl5_url(uuid, url=referer)
-    vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
-    number = 'wens'  # remote_post_util.post_get_number(guid, vjkl5, referer)
-    json_text = remote_post_util.post_list_context_by_param(guid, vjkl5, vl5x, number, param, page=6)
-    print(json_text)
-
-
-if __name__ == "__main__":
-    # init_court_tree()
-    post_test("裁判日期:2018-08-09 TO 2018-08-09,基层法院:北京市石景山区人民法院")
+    return ret_context
 
 
 def execute():
@@ -157,6 +143,5 @@ def execute():
         logging.exception("error")
         remote_post_util.init_randdom_ip_port()
 
-
-while True:
-    execute()
+# while True:
+#     execute()
