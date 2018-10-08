@@ -11,12 +11,11 @@ from tools_extends import unzip_helper, doc_id_helper, get_browser
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', filemode='a', )
 
-'''
-待获取律师信息
-'''
-
 
 def get_case_lawyer():
+    """"
+    待获取律师信息
+    """
     sql = 'select id,casenum,deal,office,phone,realname,remarks,`pageindex`,`repeatcont` from case_lawyer where deal=FALSE and fail<15 and process=0  and remark = {} {} LIMIT 1'.format(
         config.remark,
         config.order_by)
