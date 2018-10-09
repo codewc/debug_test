@@ -114,7 +114,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     return res.cookies.get("vjkl5")
 
 
-def post_get_vjkl5_url(guid, url=""):
+def post_get_vjkl5_url(guid, proxies={}, url=""):
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -295,7 +295,7 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
     return ret.json()
 
 
-def post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=1, page=20, cookies={}):
+def post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=1, page=20, cookies={}, _proxies={}):
     payload = {'Param': param,
                'Index': index,
                'Page': page,
@@ -320,7 +320,7 @@ def post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=1, page=2
     logging.info(payload)
     logging.info(headers)
     ret = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers,
-                        proxies=proxies,
+                        proxies=_proxies,
                         timeout=30)
     logging.info(ret.json())
     ret.close()

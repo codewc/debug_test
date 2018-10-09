@@ -11,17 +11,17 @@ import remote_post_util
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', )
 wen_shu_js = ""
-with open(os.curdir + "./md5_20180820.js") as f:
+with open(os.curdir + "/md5_20180820.js") as f:
     wen_shu_js += f.read()
-with open(os.curdir + "./base64_200180820_1.js") as f:
+with open(os.curdir + "/base64_200180820_1.js") as f:
     wen_shu_js += f.read()
-with open(os.curdir + './Base64_20180820.js') as f:
+with open(os.curdir + '/Base64_20180820.js') as f:
     wen_shu_js += f.read()
-with open(os.curdir + "./sha1.js") as f:
+with open(os.curdir + "/sha1.js") as f:
     wen_shu_js += f.read()
-with open(os.curdir + './rawinflate_20180820.js') as f:
+with open(os.curdir + '/rawinflate_20180820.js') as f:
     wen_shu_js += f.read()
-with open(os.curdir + "./20180927/wenshu_20180820.js") as f:
+with open(os.curdir + "/20180927/wenshu_20180820.js") as f:
     wen_shu_js += f.read()
 uuid = execjs.compile(wen_shu_js).call('guid')
 logging.info(wen_shu_js)
