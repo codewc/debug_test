@@ -46,7 +46,7 @@ def extract_case_plan_schema():
         schema_search,
         total_count,
         state 
-    FROM case_plan_schema WHERE state='10' AND fail<15 ORDER BY schema_day limit 1 
+    FROM case_plan_schema WHERE state='10' AND fail<15 ORDER BY schema_day,batch_count limit 1 
     '''
     row = db_helper.fetch_one(sql)
     db_helper.update("UPDATE case_plan_schema SET state=%s WHERE rule_id=%s",

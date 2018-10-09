@@ -4,7 +4,7 @@ import urllib.parse as urlParse
 import urllib.parse as urlparse
 import json
 import requests
-
+import re
 from ip_tools import get_ip
 
 global proxies
@@ -114,7 +114,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     return res.cookies.get("vjkl5")
 
 
-def post_get_vjkl5_url(guid, proxies={}, url=""):
+async def post_get_vjkl5_url(client, guid, proxies={}, url=""):
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -128,22 +128,25 @@ def post_get_vjkl5_url(guid, proxies={}, url=""):
                "sorttype": 1,
                "number": "",
                "conditions": 'searchWord 2 AJLX  案件类型:民事案件',
-               # "conditions": 'searchWord  CPRQ  裁判日期:2018-09-01  TO  2018-09-01',
-               # "conditions": 'searchWord 与公司、证券、保险、票据等有关的民事纠纷   二级案由:与公司、证券、保险、票据等有关的民事纠纷',
-               # "conditions": 'searchWord 2 AJLX  案件类型:民事案件',
-               # "conditions": 'searchWord 保险人代位求偿权纠纷   五级案由: 保险人代位求偿权纠纷',
                }  # 先写死
-    res = requests.post(
-        url=url,
-        headers=headers,
-        proxies=proxies,
-        data=payload,
-        timeout=30,
-    )
-    print(url)
-    # print(res.text)
-    logging.info(res.cookies)
-    return res.cookies.get("vjkl5")
+    # res = requests.post(
+    #     url=url,
+    #     headers=headers,
+    #     proxies=proxies,
+    #     data=payload,
+    #     timeout=30,
+    # )
+    writ_content = await client.post(url=url,
+                                     proxy_headers=headers,
+                                     # headers=headers,
+                                     data=payload,
+                                     timeout=15,
+                                     proxy=proxies.get("http"))
+    assert writ_content.status == 200
+    vjkl5 = writ_content.cookies.get("vjkl5")
+    _ret = re.findall('vjkl5=(.*?);', str(vjkl5))[0]
+    logging.info(_ret)
+    return _ret
 
 
 def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, cookies={}):
@@ -218,6 +221,38 @@ def post_get_number(guid, vjkl5, referer):
                       timeout=15)
     logging.info("number=" + d.text)
     return d.text
+
+
+async def async_post_get_number(client, guid, vjkl5, referer, _proxies):
+    payload = {"guid": guid, }
+    headers = {'Accept': '*/*',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Content-Length': '40',
+               'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+               'Cookie': 'vjkl5=' + vjkl5,
+               'Host': 'wenshu.court.gov.cn',
+               'Origin': 'http://wenshu.court.gov.cn',
+               'Referer': referer,
+               'User-Agent': get_randdom_header(),
+               'X-Requested-With': 'XMLHttpRequest',
+               }
+    logging.info(payload)
+    logging.info(headers)
+    # d = requests.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode', data=payload, headers=headers, proxies=proxies,
+    #                   timeout=15)
+    # logging.info("number=" + d.text)
+    _ret = await client.post(url='http://wenshu.court.gov.cn/ValiCode/GetCode',
+                             proxy_headers=headers,
+                             # headers=headers,
+                             data=payload,
+                             timeout=15,
+                             proxy=_proxies.get("http")
+                             )
+    assert _ret.status == 200
+    logging.info(await _ret.text())
+    return await _ret.text()
 
 
 def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, Index=1,
@@ -295,7 +330,8 @@ def post_list_context(guid, vjkl5, vl5x, number, AJLX=None, WSLX=None, CPRQ=None
     return ret.json()
 
 
-def post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=1, page=20, cookies={}, _proxies={}):
+async def post_list_context_by_param(client, guid, vjkl5, vl5x, number, param, index=1, page=20, cookies={},
+                                     _proxies={}):
     payload = {'Param': param,
                'Index': index,
                'Page': page,
@@ -319,12 +355,21 @@ def post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=1, page=2
                }
     logging.info(payload)
     logging.info(headers)
-    ret = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers,
-                        proxies=_proxies,
-                        timeout=30)
-    logging.info(ret.json())
-    ret.close()
-    return ret.json()
+    logging.info(_proxies)
+    # ret = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers,
+    #                     proxies=_proxies,
+    #                     timeout=30)
+    # logging.info(ret.json())
+    _ret = await client.post(url='http://wenshu.court.gov.cn/List/ListContent',
+                             proxy_headers=headers,
+                             # headers=headers,
+                             data=payload,
+                             timeout=15,
+                             proxy=_proxies.get("http"),
+                             )
+    assert _ret.status == 200
+    logging.info(await _ret.text())
+    return await _ret.text()
 
 
 def list_tree_content(param, vl5x, guid, number, vjkl5):

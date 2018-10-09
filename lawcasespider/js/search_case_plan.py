@@ -12,17 +12,24 @@ import tools
 from dbtools import law_case_helper as db_helper
 from task_schema import db
 from tools import wen_shu_js
+import aiohttp
+import asyncio
 
 
-def proceed_schema(param, proxies={}, index=1, page=20):
+async def _proceed_schema(param, proxies={}, index=1, page=20):
     guid = execjs.compile(wen_shu_js).call('guid')
     referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
-    vjkl5 = remote_post_util.post_get_vjkl5_url(guid, proxies=proxies, url=referer)
-    vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
-    number = 'wens'  # remote_post_util.post_get_number(guid, vjkl5, referer)
-    json_text = remote_post_util.post_list_context_by_param(guid, vjkl5, vl5x, number, param, index=index, page=page,
-                                                            _proxies=proxies)
-    return json_text
+    async with aiohttp.ClientSession() as client:
+        client.cookie_jar.clear()
+        vjkl5 = await remote_post_util.post_get_vjkl5_url(client, guid, proxies=proxies, url=referer)
+        vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
+        number = 'wens'  # await remote_post_util.async_post_get_number(client, guid, vjkl5, referer, _proxies=proxies)
+        json_text = await remote_post_util.post_list_context_by_param(client, guid, vjkl5, vl5x, number, param,
+                                                                      index=index,
+                                                                      page=page,
+                                                                      _proxies=proxies
+                                                                      )
+        return json_text
 
 
 def condition_helper(schema_day="2018-08-09"):
@@ -69,7 +76,7 @@ class CasePlanSchema(object):
             self.schema = db.extract_case_plan_schema()
         self.page = page
 
-    def proceed_schema(self):
+    async def proceed_schema(self):
         """
         下载任务
         :return:
@@ -82,14 +89,20 @@ class CasePlanSchema(object):
             while True:  #
                 page_index = 1 if page_index == 0 else page_index
                 IpPort.random_ip_port()
-                json_text = proceed_schema(param=self.schema['schema_search'], index=page_index,
-                                           page=self.page, proxies=IpPort.proxies)
+                _proxies = IpPort.proxies
+                json_text = await _proceed_schema(param=self.schema['schema_search'],
+                                                  index=page_index,
+                                                  page=self.page,
+                                                  proxies=IpPort.proxies)
                 if "RunEval" in json_text:
-                    db.insert_case_plan_schema_detail(rule_id=rule_id, page_index=page_index,
-                                                      schema_day=self.schema['schema_day'], json_text=json_text)
+                    db.insert_case_plan_schema_detail(rule_id=rule_id,
+                                                      page_index=page_index,
+                                                      schema_day=self.schema['schema_day'],
+                                                      json_text=json_text)
 
                 elif "remind" in json_text:
-                    IpPort.update = True
+                    if _proxies and _proxies.get("http") in IpPort.proxies.get("http"):  # 协程
+                        IpPort.update = True
                     continue
                 else:  # TODO：异常处理优化
                     logging.warning(json_text)
@@ -147,8 +160,14 @@ class IpPort(object):
             time.sleep(60)
 
 
-if __name__ == "__main__":
+if __name__ == "__main3__":
     IpPort.random_ip_port()
     while True:
         schema = CasePlanSchema()
         schema.proceed_schema()
+
+if __name__ == "__main__":
+    while True:
+        IpPort.random_ip_port()
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.wait([CasePlanSchema().proceed_schema() for _ in range(3)]))
