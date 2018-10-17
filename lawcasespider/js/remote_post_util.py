@@ -114,7 +114,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     return res.cookies.get("vjkl5")
 
 
-async def post_get_vjkl5_url(client, guid, proxies={}, url=""):
+async def async_post_get_vjkl5_url(client, guid, proxies={}, url=""):
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -147,6 +147,34 @@ async def post_get_vjkl5_url(client, guid, proxies={}, url=""):
     _ret = re.findall('vjkl5=(.*?);', str(vjkl5))[0]
     logging.info(_ret)
     return _ret
+
+
+def post_get_vjkl5_url(guid, url=""):
+    headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,zh;q=0.9',
+               'Connection': 'keep-alive',
+               'Cache-Control': 'max-age=0',
+               'Host': 'wenshu.court.gov.cn',
+               'Upgrade-Insecure-Requests': '1',
+               'User-Agent': get_randdom_header(),
+               }
+    payload = {"guid": "",
+               "sorttype": 1,
+               "number": "",
+               "conditions": 'searchWord 2 AJLX  案件类型:民事案件',
+               }  # 先写死
+    res = requests.post(
+        url=url,
+        headers=headers,
+        proxies=proxies,
+        data=payload,
+        timeout=30,
+    )
+    print(url)
+    # print(res.text)
+    logging.info(res.cookies)
+    return res.cookies.get("vjkl5")
 
 
 def post_get_number(guid, vjkl5, AJLX=None, WSLX=None, CPRQ=None, LS=None, LAWYER=None, cookies={}):
@@ -509,13 +537,16 @@ def post_court_tree_context(param, key, retry=6):
     json_text = ""
     while not success:
         if count >= retry:
-            return json_text
+            raise Exception("超过重试次数")
 
         count += 1
         ret = requests.post(url='http://wenshu.court.gov.cn/List/CourtTreeContent', data=payload, headers=headers,
                             proxies=proxies,
                             timeout=30)
-        json_text = ret.json()
+        try:
+            json_text = ret.json()
+        except Exception:
+            logging.exception("error==>")
         ret.close()
         if "Key" in json_text:
             success = True

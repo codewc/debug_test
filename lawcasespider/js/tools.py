@@ -96,7 +96,8 @@ def proceed_case_lawyer(case_lawyer):
 
 def init_court_tree(condition="裁判日期:2018-08-09 TO 2018-08-09"):
     guid = execjs.compile(wen_shu_js).call('guid')
-    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
+    #referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
+    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1"
     vjkl5 = remote_post_util.post_get_vjkl5_url(uuid, url=referer)
     vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
     number = 'wens'  # remote_post_util.post_get_number(guid, vjkl5, referer)

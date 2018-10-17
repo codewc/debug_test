@@ -14,14 +14,15 @@ from task_schema import db
 from tools import wen_shu_js
 import aiohttp
 import asyncio
+import concurrent
 
 
 async def _proceed_schema(param, proxies={}, index=1, page=20):
     guid = execjs.compile(wen_shu_js).call('guid')
-    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=&conditions=searchWord+2+AJLX++%E6%A1%88%E4%BB%B6%E7%B1%BB%E5%9E%8B:%E6%B0%91%E4%BA%8B%E6%A1%88%E4%BB%B6&"
+    referer = "http://wenshu.court.gov.cn/list/list/?sorttype=1"
     async with aiohttp.ClientSession() as client:
         client.cookie_jar.clear()
-        vjkl5 = await remote_post_util.post_get_vjkl5_url(client, guid, proxies=proxies, url=referer)
+        vjkl5 = await remote_post_util.async_post_get_vjkl5_url(client, guid, proxies=proxies, url=referer)
         vl5x = execjs.compile(wen_shu_js).call('getkey', vjkl5)
         number = 'wens'  # await remote_post_util.async_post_get_number(client, guid, vjkl5, referer, _proxies=proxies)
         json_text = await remote_post_util.post_list_context_by_param(client, guid, vjkl5, vl5x, number, param,
@@ -48,8 +49,8 @@ def get_between_day(begin_date, end_date):
     return date_list
 
 
-if __name__ == "__main1__":
-    schema_days = get_between_day("2017-01-12", "2017-01-31", )
+if __name__ == "__main__":
+    schema_days = get_between_day("2017-12-01", "2017-12-31", )
     for schema_day in schema_days:
         # post_test("裁判日期:2018-08-09 TO 2018-08-09,基层法院:北京市石景山区人民法院")
         ret = tools.init_court_tree(condition=condition_helper(schema_day))
@@ -90,11 +91,20 @@ class CasePlanSchema(object):
                 page_index = 1 if page_index == 0 else page_index
                 IpPort.random_ip_port()
                 _proxies = IpPort.proxies
-                json_text = await _proceed_schema(param=self.schema['schema_search'],
-                                                  index=page_index,
-                                                  page=self.page,
-                                                  proxies=IpPort.proxies)
+                try:
+                    json_text = await _proceed_schema(param=self.schema['schema_search'],
+                                                      index=page_index,
+                                                      page=self.page,
+                                                      proxies=IpPort.proxies)
+                except concurrent.futures._base.TimeoutError:
+                    if IpPort.retry > 6:
+                        IpPort.update = True
+                        continue
+                    IpPort.retry = IpPort.retry + 1
+                    logging.exception("warn==> retry=" + str(IpPort.retry))
+                    continue
                 if "RunEval" in json_text:
+                    IpPort.retry = 0  # 重置为0
                     db.insert_case_plan_schema_detail(rule_id=rule_id,
                                                       page_index=page_index,
                                                       schema_day=self.schema['schema_day'],
@@ -128,6 +138,7 @@ class IpPort(object):
     cookie_dict = {}
     update = True  # 需要更新IP地址
     count = 0
+    retry = 0
 
     @staticmethod
     def random_ip_port():
@@ -144,6 +155,7 @@ class IpPort(object):
             }
             IpPort.update = False
             IpPort.count = 0
+            IpPort.retry = 0
         logging.info("IpPort count=" + str(IpPort.count))
 
     @staticmethod
@@ -166,7 +178,7 @@ if __name__ == "__main3__":
         schema = CasePlanSchema()
         schema.proceed_schema()
 
-if __name__ == "__main__":
+if __name__ == "__main2__":
     while True:
         IpPort.random_ip_port()
         loop = asyncio.get_event_loop()
