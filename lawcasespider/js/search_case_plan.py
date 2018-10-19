@@ -1,20 +1,20 @@
 # coding =utf8
+import asyncio
+import concurrent
 import datetime
 import json
 import logging
 import time
 
+import aiohttp
 import execjs
 import requests
-
+from utils.redis_util import RedisCasePlanSchemaTaskMaster
 import remote_post_util
 import tools
 from dbtools import law_case_helper as db_helper
 from task_schema import db
 from tools import wen_shu_js
-import aiohttp
-import asyncio
-import concurrent
 
 
 async def _proceed_schema(param, proxies={}, index=1, page=20):
@@ -49,7 +49,7 @@ def get_between_day(begin_date, end_date):
     return date_list
 
 
-if __name__ == "__main__":
+if __name__ == "__main4__":
     schema_days = get_between_day("2017-12-01", "2017-12-31", )
     for schema_day in schema_days:
         # post_test("裁判日期:2018-08-09 TO 2018-08-09,基层法院:北京市石景山区人民法院")
@@ -65,17 +65,39 @@ class CasePlanSchema(object):
     """
     获取调度任务
     """
+    __max_retry = 30
 
     def __init__(self, schema={}, page=20):
         """
         构造器
         :param schema:
         """
+        self.page = page
         if len(schema) > 0:
             self.schema = schema
         else:
-            self.schema = db.extract_case_plan_schema()
-        self.page = page
+            # self.schema = db.extract_case_plan_schema()
+            self.schema = RedisCasePlanSchemaTaskMaster.extract_case_plan_schema(RedisCasePlanSchemaTaskMaster.KEY,
+                                                                                 1).pop()
+
+    @staticmethod
+    def fail(now=False):
+        """
+        :param now: True 马上刷新
+        :return:
+        """
+        __ret = False
+        if IpPort.retry > CasePlanSchema.__max_retry or now:
+            IpPort.update = True
+            __ret = True
+            logging.warning("IpPort.update = True")
+        IpPort.retry = IpPort.retry + 1
+        logging.warning("warn==> retry=" + str(IpPort.retry))
+        return __ret
+
+    @staticmethod
+    def success():
+        IpPort.retry = 0
 
     async def proceed_schema(self):
         """
@@ -97,19 +119,25 @@ class CasePlanSchema(object):
                                                       page=self.page,
                                                       proxies=IpPort.proxies)
                 except concurrent.futures._base.TimeoutError:
-                    if IpPort.retry > 6:
-                        IpPort.update = True
-                        continue
-                    IpPort.retry = IpPort.retry + 1
+                    CasePlanSchema.fail()
+                    continue
+                except aiohttp.client_exceptions.ClientProxyConnectionError:  # 代理不可用
+                    CasePlanSchema.fail(now=True)
+                    continue
+                except aiohttp.client_exceptions.ClientPayloadError:
+                    CasePlanSchema.fail()
                     logging.exception("warn==> retry=" + str(IpPort.retry))
                     continue
+                finally:
+                    if IpPort.retry > 6:
+                        IpPort.update = True
+                    IpPort.retry = IpPort.retry + 1
                 if "RunEval" in json_text:
-                    IpPort.retry = 0  # 重置为0
+                    CasePlanSchema.success()
                     db.insert_case_plan_schema_detail(rule_id=rule_id,
                                                       page_index=page_index,
                                                       schema_day=self.schema['schema_day'],
                                                       json_text=json_text)
-
                 elif "remind" in json_text:
                     if _proxies and _proxies.get("http") in IpPort.proxies.get("http"):  # 协程
                         IpPort.update = True
@@ -117,7 +145,6 @@ class CasePlanSchema(object):
                 else:  # TODO：异常处理优化
                     logging.warning(json_text)
                     continue
-
                 if page_index * self.page < batch_count:
                     page_index += 1
                 else:
@@ -174,12 +201,16 @@ class IpPort(object):
 
 if __name__ == "__main3__":
     IpPort.random_ip_port()
+    # task_pool = set()
     while True:
-        schema = CasePlanSchema()
+        task_pool = RedisCasePlanSchemaTaskMaster.extract_case_plan_schema(RedisCasePlanSchemaTaskMaster.KEY, 1)
+        schema = CasePlanSchema(task_pool.pop())
         schema.proceed_schema()
 
-if __name__ == "__main2__":
+if __name__ == "__main__":
     while True:
         IpPort.random_ip_port()
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.wait([CasePlanSchema().proceed_schema() for _ in range(3)]))
+        task_pool = RedisCasePlanSchemaTaskMaster.extract_case_plan_schema(RedisCasePlanSchemaTaskMaster.KEY, 1)
+        # loop.run_until_complete(asyncio.wait([CasePlanSchema().proceed_schema() for _ in range(3)]))
+        loop.run_until_complete(asyncio.wait([CasePlanSchema(task_pool.pop()).proceed_schema()]))
