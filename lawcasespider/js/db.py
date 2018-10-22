@@ -6,7 +6,7 @@ import uuid
 from pymysql.err import IntegrityError
 
 import dbtools.helper as db_helper
-from tools_extends import unzip_helper, doc_id_helper, get_browser
+from tools_extends import unzip_helper, doc_id_helper
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S', filemode='a', )
@@ -41,9 +41,6 @@ def insert_case_lawyer_schema_before(lawyer_id, page_json, index, batch_count, p
            )  VALUES (%s, %s, %s, %s, %s,%s)'''
     id = str(uuid.uuid1())
     db_helper.insert(template_sql, (id, lawyer_id, page_json, batch_count, index, pageNum,))
-
-
-browser = get_browser()
 
 
 def insert_case_lawyer_schema(lawyer_id, page_json):

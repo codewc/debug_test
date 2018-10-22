@@ -54,7 +54,7 @@ class RedisCasePlanSchemaTaskMaster(object):
                 _ret.append(ast.literal_eval(data.decode("utf-8")))
             else:
                 break
-        logging.info(str(_ret))
+        logging.info("extract_case_plan_schema=" + str(_ret))
         return _ret
 
 # RedisCasePlanSchemaTaskMaster.refresh_case_plan_schema(batch_num=3)

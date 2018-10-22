@@ -30,7 +30,8 @@ if __name__ == "__main1__":
 
 from tools_extends import unzip_helper, doc_id_helper, get_browser
 
-browser = get_browser()
+
+# browser = get_browser()
 
 
 class CaseDetailProcessor(object):

@@ -82,7 +82,7 @@ def get_randdom_header():
     return randdom_header
 
 
-def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
+def post_get_vjkl5(guid, _proxies={}, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     conditon = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}"
     # conditons = "&conditions=searchWord++CPRQ++%E8%A3%81%E5%88%A4%E6%97%A5%E6%9C%9F:{}%20TO%20{}".format(CPRQ, CPRQ)
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -104,7 +104,7 @@ def post_get_vjkl5(guid, AJLX=None, WSLX=None, CPRQ='2018-08-16'):
     res = requests.post(
         url="http://wenshu.court.gov.cn/list/list/?sorttype=1&number=&guid=" + guid + conditon.format(CPRQ, CPRQ),
         headers=headers,
-        proxies=proxies,
+        proxies=_proxies,
         data=payload,
         timeout=30,
     )
@@ -129,13 +129,6 @@ async def async_post_get_vjkl5_url(client, guid, proxies={}, url=""):
                "number": "",
                "conditions": 'searchWord 2 AJLX  案件类型:民事案件',
                }  # 先写死
-    # res = requests.post(
-    #     url=url,
-    #     headers=headers,
-    #     proxies=proxies,
-    #     data=payload,
-    #     timeout=30,
-    # )
     writ_content = await client.post(url=url,
                                      proxy_headers=headers,
                                      # headers=headers,
@@ -146,10 +139,24 @@ async def async_post_get_vjkl5_url(client, guid, proxies={}, url=""):
     vjkl5 = writ_content.cookies.get("vjkl5")
     _ret = re.findall('vjkl5=(.*?);', str(vjkl5))[0]
     logging.info(_ret)
+    if writ_content:
+        writ_content.close()
     return _ret
 
 
-def post_get_vjkl5_url(guid, url=""):
+def post_get_vjkl5_url_helper(guid, _proxies={}):
+    from search_case_plan import IpPort
+    http__proxies = IpPort.proxies.get("http")
+    if http__proxies and _proxies.get("http") in http__proxies and IpPort.cache_vjkl5:
+        logging.info("use cache vjkl5" + IpPort.cache_vjkl5)
+        return IpPort.cache_vjkl5
+    else:
+        vjkl5 = post_get_vjkl5(guid=guid, _proxies=_proxies)
+        IpPort.cache_vjkl5 = vjkl5
+        return IpPort.cache_vjkl5
+
+
+def post_get_vjkl5_url(guid, url="", _proxies={}):
     headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -167,7 +174,7 @@ def post_get_vjkl5_url(guid, url=""):
     res = requests.post(
         url=url,
         headers=headers,
-        proxies=proxies,
+        proxies=_proxies,
         data=payload,
         timeout=30,
     )
@@ -381,9 +388,9 @@ async def post_list_context_by_param(client, guid, vjkl5, vl5x, number, param, i
                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.0.1471.813 Safari/537.36',
                'X-Requested-With': 'XMLHttpRequest',
                }
-    logging.info(payload)
-    logging.info(headers)
-    logging.info(_proxies)
+    # logging.info(payload)
+    # logging.info(headers)
+    logging.info("_proxies=" + str(_proxies) + ";param=" + param + ";index=" + str(index))
     # ret = requests.post(url='http://wenshu.court.gov.cn/List/ListContent', data=payload, headers=headers,
     #                     proxies=_proxies,
     #                     timeout=30)
@@ -396,8 +403,12 @@ async def post_list_context_by_param(client, guid, vjkl5, vl5x, number, param, i
                              proxy=_proxies.get("http"),
                              )
     assert _ret.status == 200
-    logging.info(await _ret.text())
-    return await _ret.text()
+    logging.info("param=" + param + ";page=" + str(index) + "====")
+    # logging.info(await _ret.text())
+    _ret_text = await _ret.text()
+    if _ret:
+        _ret.close()
+    return _ret_text
 
 
 def list_tree_content(param, vl5x, guid, number, vjkl5):
